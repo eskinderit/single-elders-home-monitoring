@@ -2,6 +2,9 @@
 
 apt-get update
 apt-get install -y python3 default-jre python3-pip
+add-apt-repository ppa:openjdk-r/ppa
+apt-get update
+apt-get install openjdk-11-jdk
 # a simple two-panel file commander
 apt-get install -y mc
 # uncomment one of the following for graphical desktops
@@ -26,7 +29,7 @@ pip3 install jupyter
 rm -rf spark-3.*-bin-hadoop*.tgz*
 if ! [ -d /usr/local/spark-3.5.0-bin-hadoop3 ]; then
 # current link as of 2023-11-24:
-  wget https://dlcdn.apache.org/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz
+  wget https://archive.apache.org/dist/spark/spark-3.5.0/spark-3.5.0-bin-hadoop3.tgz
   tar -C /usr/local -xvzf spark-3.5.0-bin-hadoop3.tgz
   rm spark-3.5.0-bin-hadoop3.tgz
 fi
