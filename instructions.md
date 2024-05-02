@@ -7,7 +7,7 @@
 ## initial-setup + everyday launch
 3. mount the donwloaded setup: ```vagrant up --provision```
 4. open port for jupyter notebook display: ```vagrant ssh -- -L 8888:localhost:8888```
-5. launch jupyter notebook (with spark pre-enabled): ```/usr/local/spark-3.3.1-bin-hadoop3/bin/pyspark```
+5. launch jupyter notebook (with spark pre-enabled): ```/usr/local/spark-3.5.0-bin-hadoop3/bin/pyspark```
 6. to close everything launch ```exit``` to switch off VM and ```vagrant halt``` to shutdown vagrant 
 
 # Notes

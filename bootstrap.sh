@@ -20,7 +20,7 @@ apt-get install -y mc
 # cd to the shared  directory
 cd /vagrant
 # python packages
-pip3 install matplotlib pandas seaborn
+pip3 install matplotlib pandas seaborn scikit-learn plotly scipy
 # jupyter
 pip3 install jupyter
 # uncomment and modify to remove a previously installed Spark version
