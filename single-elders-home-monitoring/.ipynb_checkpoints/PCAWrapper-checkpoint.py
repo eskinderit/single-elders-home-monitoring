@@ -1,4 +1,9 @@
 from typing import Optional
+
+# needed for pyspark windows installs
+import findspark
+findspark.init()
+
 import numpy as np
 import pyspark
 from pyspark.ml.feature import PCA, StandardScaler
