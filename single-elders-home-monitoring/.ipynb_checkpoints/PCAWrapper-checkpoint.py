@@ -1,5 +1,5 @@
 from typing import Optional
-
+import pandas as pd
 # needed for pyspark windows installs
 import findspark
 findspark.init()
@@ -100,7 +100,7 @@ class PCAWrapper():
         else:
             return self.__PCA.transform(dataset, params)
 
-    def inverse_transform(self, dataset: pyspark.sql.dataframe.DataFrame):
+    def inverse_transform(self, dataset: pyspark.sql.dataframe.DataFrame, schema=None):
         """
         Inverse transforms the dataset to the original space and re-adds the mean to invert the data-centering.
 
@@ -117,7 +117,9 @@ class PCAWrapper():
         # inverting (by transposition) principal component matrix
         K_T = K.T
 
-        X = np.array(dataset.select("*").toPandas()[self.getOutputCol()].tolist())
+        pd_dataset = dataset.toPandas()
+        
+        X = np.array(pd_dataset[self.getOutputCol()].tolist())
 
         if self.__centering_data:
             reprojected_dataset = X@K.T + np.array(self.__scaler.mean)
@@ -125,4 +127,4 @@ class PCAWrapper():
         else:
             reprojected_dataset = X@K.T
             
-        return reprojected_dataset.tolist()
+        return pd.concat([pd_dataset,pd.DataFrame(reprojected_dataset, columns=schema)], axis=1)
