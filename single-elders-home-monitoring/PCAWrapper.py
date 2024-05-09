@@ -10,7 +10,7 @@ from pyspark.ml.feature import PCA, StandardScaler
 
 class PCAWrapper():
     """
-    A wrapper class for PCA (Principal Component Analysis) using PySpark's implementation.
+    A wrapper class for PCA (Principal Component Analysis) using PySpark's implementation, adding data centering and inverse transformation.
 
     Parameters:
         k (int, optional): Number of principal components to retain. Default is None.
@@ -43,7 +43,7 @@ class PCAWrapper():
     def getOutputCol(self):
         return self.__PCA.getOutputCol()
     
-    def fit(self, dataset: pyspark.sql.dataframe.DataFrame, params = None):
+    def fit(self, dataset: pyspark.sql.dataframe.DataFrame, params = None) -> 'PCAWrapper':
         """
         This methods performs two actions in sequence:
         
@@ -73,7 +73,7 @@ class PCAWrapper():
         return self
 
     
-    def transform(self, dataset: pyspark.sql.dataframe.DataFrame, params = None, use_actual_mean = False):
+    def transform(self, dataset: pyspark.sql.dataframe.DataFrame, params = None, fit_mean = True) -> pyspark.sql.dataframe.DataFrame:
         """
         This methods performs two actions in sequence:
         1. Centers the data using the mean captured when calling `fit()`, unless `use_actual_mean` is set to True, in that case the mean on which `transform` is called is re-fitted.
@@ -82,7 +82,7 @@ class PCAWrapper():
         Parameters:
             dataset (pyspark.sql.dataframe.DataFrame): Input DataFrame.
             params: Additional parameters to be passed to the PCA transformation.
-            use_actual_mean (bool): Whether to use the actual mean for centering the data.
+            fit_mean (bool): Whether to re-fit the mean on the current dataset for centering the data. Default is True.
 
         Returns:
             pyspark.sql.dataframe.DataFrame: Transformed DataFrame.
@@ -90,7 +90,8 @@ class PCAWrapper():
         
         if self.__centering_data:
 
-            if use_actual_mean:
+            if fit_mean:
+                self.__scaler = StandardScaler(inputCol=self.getInputCol(), outputCol="scaled_features_centered", withStd=False, withMean=True)
                 self.__scaler = self.__scaler.fit(dataset)
                 
             centered_df = self.__scaler.transform(dataset)
@@ -100,7 +101,7 @@ class PCAWrapper():
         else:
             return self.__PCA.transform(dataset, params)
 
-    def inverse_transform(self, dataset: pyspark.sql.dataframe.DataFrame, schema=None):
+    def inverse_transform(self, dataset: pyspark.sql.dataframe.DataFrame, schema=None)->pd.DataFrame:
         """
         Inverse transforms the dataset to the original space and re-adds the mean to invert the data-centering.
 
