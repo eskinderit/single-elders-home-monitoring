@@ -65,7 +65,6 @@ class PCAWrapper():
             centered_df = centered_df.drop(self.getInputCol()).withColumnRenamed("scaled_features_centered", self.getInputCol())
             
             self.__PCA = self.__PCA.fit(centered_df, params)
-            result = self.__PCA.transform(centered_df, params)
 
         else:
             self.__PCA = self.__PCA.fit(dataset, params)
