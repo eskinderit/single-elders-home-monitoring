@@ -2,6 +2,7 @@
 
 apt-get update
 apt-get install -y python3 default-jre python3-pip
+alias python=python3
 add-apt-repository ppa:openjdk-r/ppa
 apt-get update
 apt-get install openjdk-11-jdk
@@ -68,19 +69,9 @@ if ! grep "export PYSPARK_DRIVER_PYTHON_OPTS=notebook" /home/vagrant/.bashrc; th
 fi
 if ! grep "export SPARK_HOME=/usr/local/spark-3.5.0-bin-hadoop3" /home/vagrant/.bashrc; then
   echo "export SPARK_HOME=/usr/local/spark-3.5.0-bin-hadoop3" >>  /home/vagrant/.bashrc
-  echo "export PATH=$PATH:$SPARK_HOME/bin" >>  /home/vagrant/.bashrc
-  echo "export PATH=$PATH:$SPARK_HOME/sbin" >>  /home/vagrant/.bashrc
+  echo "export PATH=$PATH:spark-3.5.0-bin-hadoop3/bin:spark-3.5.0-bin-hadoop3/sbin" >>  /home/vagrant/.bashrc
 fi
-# switch to user ubuntu
-#sudo -i -u ubuntu bash << EOF
-#echo "Switched to user ubuntu"
-#if ! ( echo exit | ssh localhost ) ; then
-#  echo "Creating keys and authorizing"
-#  ssh-keygen -t rsa -P '' -f ~/.ssh/id_rsa
-#  cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
-#  chmod 0600 ~/.ssh/authorized_keys
-#fi
-#EOF
+
 
 # setting up hostnames
 echo "127.0.0.1 localhost
