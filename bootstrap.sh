@@ -38,7 +38,6 @@ fi
 if ! [ -d /usr/local/hadoop-3.4.0 ]; then
   wget https://downloads.apache.org/hadoop/common/hadoop-3.4.0/hadoop-3.4.0.tar.gz
   tar -C /usr/local -xvzf hadoop-3.4.0.tar.gz
-  chown --recursive ubuntu:ubuntu /usr/local/hadoop-3.4.0
   rm hadoop-3.4.0.tar.gz
 fi
 
@@ -61,24 +60,19 @@ fi
 if ! grep "export PYSPARK_PYTHON=/usr/bin/python3" /home/vagrant/.bashrc; then
   echo "export PYSPARK_PYTHON=/usr/bin/python3" >>  /home/vagrant/.bashrc
 fi
-if ! grep "export PYSPARK_DRIVER_PYTHON=jupyter" /home/vagrant/.bashrc; then
-  echo "export PYSPARK_DRIVER_PYTHON=jupyter" >>  /home/vagrant/.bashrc
-fi
-if ! grep "export PYSPARK_DRIVER_PYTHON_OPTS=notebook" /home/vagrant/.bashrc; then
-  echo "export PYSPARK_DRIVER_PYTHON_OPTS=notebook" >>  /home/vagrant/.bashrc
+if ! grep "export PYSPARK_DRIVER_PYTHON=/usr/bin/python3" /home/vagrant/.bashrc; then
+  echo "export PYSPARK_DRIVER_PYTHON=/usr/bin/python3" >>  /home/vagrant/.bashrc
 fi
 if ! grep "export SPARK_HOME=/usr/local/spark-3.5.0-bin-hadoop3" /home/vagrant/.bashrc; then
   echo "export SPARK_HOME=/usr/local/spark-3.5.0-bin-hadoop3" >>  /home/vagrant/.bashrc
-  echo "export PATH=$PATH:spark-3.5.0-bin-hadoop3/bin:spark-3.5.0-bin-hadoop3/sbin" >>  /home/vagrant/.bashrc
+  echo "export PATH=$PATH:/usr/local/spark-3.5.0-bin-hadoop3/bin:/usr/local/spark-3.5.0-bin-hadoop3/sbin" >>  /home/vagrant/.bashrc
 fi
 
 
 # setting up hostnames
 echo "127.0.0.1 localhost
 192.168.0.11 spark-master
-192.168.0.11 spark-slave-1
 192.168.0.12 spark-slave-2
 192.168.0.13 spark-slave-3" > /etc/hosts
 
-echo "## VM configuration completed ##"
 echo "## VM configuration completed ##"
