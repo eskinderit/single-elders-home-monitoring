@@ -1,8 +1,8 @@
 from typing import Optional
 import pandas as pd
 # needed for pyspark windows installs
-import findspark
-findspark.init()
+#import findspark
+#findspark.init()
 
 import numpy as np
 import pyspark
@@ -59,7 +59,7 @@ class PCAWrapper():
         """
         
         if self.__centering_data:
-            self.__scaler = StandardScaler(inputCol=self.getInputCol(), outputCol="scaled_features_centered", withStd=False, withMean=True)
+            self.__scaler = StandardScaler(inputCol=self.getInputCol(), outputCol="scaled_features_centered", withStd=True, withMean=True)
             self.__scaler = self.__scaler.fit(dataset)
             centered_df = self.__scaler.transform(dataset)
             centered_df = centered_df.drop(self.getInputCol()).withColumnRenamed("scaled_features_centered", self.getInputCol())
@@ -90,7 +90,7 @@ class PCAWrapper():
         if self.__centering_data:
 
             if fit_mean:
-                self.__scaler = StandardScaler(inputCol=self.getInputCol(), outputCol="scaled_features_centered", withStd=False, withMean=True)
+                self.__scaler = StandardScaler(inputCol=self.getInputCol(), outputCol="scaled_features_centered", withStd=True, withMean=True)
                 self.__scaler = self.__scaler.fit(dataset)
                 
             centered_df = self.__scaler.transform(dataset)
@@ -122,7 +122,7 @@ class PCAWrapper():
         X = np.array(pd_dataset[self.getOutputCol()].tolist())
 
         if self.__centering_data:
-            reprojected_dataset = X@K.T + np.array(self.__scaler.mean)
+            reprojected_dataset = (X@K.T)*self.__scaler.std + np.array(self.__scaler.mean)
 
         else:
             reprojected_dataset = X@K.T
