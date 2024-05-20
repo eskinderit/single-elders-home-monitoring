@@ -1,5 +1,7 @@
 # Activity Pattern Detection using Gas Sensor Array in PySpark Cluster Mode
-This repository contains the **PySpark unofficial implementation** of the study "Home monitoring for older singles: A gas sensor array system" by Marín, D., Llano, J., Haddi, Z., Perera, A. & Fonollosa, J.
+by Alessandro D'Amico, Riccardo Murgia
+
+This repository contains the **PySpark [UNOFFICIAL] implementation** of the study "Home monitoring for older singles: A gas sensor array system" by Marín, D., Llano, J., Haddi, Z., Perera, A. & Fonollosa, J.
 - [Link to the paper](https://upcommons.upc.edu/bitstream/handle/2117/388879/1-s2.0-S0925400523007517-main.pdf;jsessionid=D5C9CCE9EA08B8E09C05EDFB9492A48E?sequence=5)
 - [Link to the dataset](https://archive.ics.uci.edu/dataset/799/single+elder+home+monitoring+gas+and+position)
 
