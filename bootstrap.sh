@@ -24,6 +24,8 @@ cd /vagrant
 pip3 install matplotlib pandas seaborn scikit-learn plotly scipy
 # jupyter
 pip3 install jupyter
+#findspark is just for development purposes in standalone mode
+pip3 install findspark
 # uncomment and modify to remove a previously installed Spark version
 # rm -rf /usr/local/spark-3.0.0-preview2-bin-hadoop2.7
 # remove any previously downloaded file
@@ -72,7 +74,7 @@ fi
 # setting up hostnames
 echo "127.0.0.1 localhost
 192.168.56.0 spark-master
-192.168.56.1 spark-slave-2
+192.168.56.3 spark-slave-2
 192.168.56.2 spark-slave-3" > /etc/hosts
 
 echo "## VM configuration completed ##"
