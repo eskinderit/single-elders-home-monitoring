@@ -65,6 +65,7 @@ start-all.sh
 ```
 Submitting a sample job to the cluster just set:
 ```
+cd $SPARK_HOME
 spark-submit --master spark://spark-master:7077 ./examples/src/main/python/pi.py 10
 ```
 
