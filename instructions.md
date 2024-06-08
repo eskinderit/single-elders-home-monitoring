@@ -124,7 +124,11 @@ sudo $HADOOP_HOME/bin/hdfs dfs -mkdir -p /user/root/vagrant
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/data/database_gas.csv /user/root/vagrant/database_gas.csv
 ```
-7. submit our project pipeline 
+7. move noise PCAModel to namenode hdfs
+```
+sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/models/noisePCA /user/root/vagrant/noisePCA
+```
+8. submit our project pipeline 
 ```
 sudo spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
 ```
