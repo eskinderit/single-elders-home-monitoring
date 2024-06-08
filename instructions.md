@@ -69,6 +69,66 @@ cd $SPARK_HOME
 spark-submit --master spark://spark-master:7077 ./examples/src/main/python/pi.py 10
 ```
 
+## Now we want to correctly set up the HDFS namenode and datanodes
+
+### Master (Namenode + Datanode) setup
+This procedure has to be followed on the spark-master VM:
+
+1. Copy as the content of the file `hdfs-site.xml` located in `/usr/local/hadoop-3.4.0/etc/hadoop`:
+```
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>2</value>
+  </property>
+  <property>
+    <name>dfs.namenode.rpc-address</name>
+    <value>spark-master:8020</value>
+  </property>
+  <property>
+    <name>dfs.namenode.name.dir</name>
+    <value>file:/hdfs/namenode</value>
+  </property>
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:/hdfs/datanode</value>
+  </property>
+</configuration>
+```
+2. Copy as the content of the file `core-site.xml` located in `/usr/local/hadoop-3.4.0/etc/hadoop`:
+```
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://spark-master:8020</value>
+  </property>
+</configuration>
+```
+3. create namenode and datanode hdfs directories
+```
+sudo mkdir -p /hdfs/datanode
+sudo mkdir -p /hdfs/namenode
+
+sudo chmod -R 777 /hdfs/datanode
+sudo chmod -R 777 /hdfs/namenode
+```
+4. format namenode
+```
+sudo $HADOOP_HOME/bin/hadoop namenode -format
+```
+5. create new folders in hdfs after format
+```
+sudo $HADOOP_HOME/bin/hdfs dfs -mkdir -p /user/root/vagrant
+```
+6. move input csv to namenode hdfs
+```
+sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/data/database_gas.csv /user/root/vagrant/database_gas.csv
+```
+7. submit our project pipeline 
+```
+sudo spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
+```
+
 ### To change configuration
 - Follow and modify accordingly the procedure linked at the beginning of this section.
 		
