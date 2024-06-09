@@ -112,32 +112,23 @@ sudo mkdir -p /hdfs/namenode
 sudo chmod -R 777 /hdfs/datanode
 sudo chmod -R 777 /hdfs/namenode
 ```
-4. activate namenode and datanode daemons
-```
-sudo $HADOOP_HOME/bin/hdfs --daemon status namenode
-sudo $HADOOP_HOME/bin/hdfs --daemon status datanode
-```
-5. format namenode
+4. format namenode
 ```
 sudo $HADOOP_HOME/bin/hadoop namenode -format
 ```
-6. create new folders in hdfs after format
+5. create new folders in hdfs after format
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -mkdir -p /user/root/vagrant
 ```
-7. move input csv to namenode hdfs
+6. move input csv to namenode hdfs
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/data/database_gas.csv /user/root/vagrant/database_gas.csv
 ```
-8. move noise PCAModel to namenode hdfs
+7. move noise PCAModel to namenode hdfs
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/models/noisePCA /user/root/vagrant/noisePCA
 ```
-or move csv training file if working in local mode:
-```
-sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/data/data_ref_until_2020-02-13.csv /user/root/vagrant/data_ref_until_2020-02-13.csv
-```
-9. submit our project pipeline 
+8. submit our project pipeline 
 ```
 sudo spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
 ```
