@@ -1,7 +1,28 @@
+#################################################### PARAMS ####################################################
+# parameter to simulate the pyspark pipeline with `n_copies` of the original dataframe, replication
+N_COPIES = 5
+LOG = True
+TRAIN_PCA = False
+LOCAL = True
+
+if LOCAL:
+    import os
+    import sys
+    os.environ['PYSPARK_PYTHON'] = sys.executable
+    os.environ['PYSPARK_DRIVER_PYTHON'] = sys.executable
+    import findspark
+    findspark.init()
+    # default config for local
+    TRAIN_PCA = True
+    INPUT_CSV_URL = './data/database_gas.csv'
+    NOISE_CSV_URL = './data/data_ref_until_2020-02-13.csv'
+else:
+    NOISE_PCA_URL = 'hdfs://spark-master:8020/user/root/vagrant/noisePCA'
+    INPUT_CSV_URL ='hdfs://spark-master:8020/user/root/vagrant/database_gas.csv'
+    NOISE_CSV_URL = 'hdfs://spark-master:8020/user/root/vagrant/data_ref_until_2020-02-13.csv'
 #################################################### IMPORTING LIBRARIES ####################################################
-#import findspark
+ # local
 import pandas as pd
-#findspark.init()
 from pyspark.conf import SparkConf
 from pyspark.sql import SparkSession 
 
@@ -22,23 +43,16 @@ from pyspark.sql.functions import lit
 from pyspark.ml.functions import vector_to_array
 from pyspark.sql.types import FloatType, IntegerType
 
-# parameter to simulate the pyspark pipeline with `n_copies` of the original dataframe, replication
-N_COPIES = 5
-LOG = True
-TRAIN_PCA = False
-NOISE_PCA_URL = 'hdfs://spark-master:8020/user/root/vagrant/noisePCA'
-
 ###################################################### IMPORTING DATA #######################################################
 if LOG:
     print('_'*20,'START: importing original dataset','_'*20)
 
-
-occupants_url='hdfs://spark-master:8020/user/root/vagrant/database_gas.csv'#'./data/database_gas.csv'
-occupants_df = spark.read.csv(occupants_url, header=True,inferSchema=True) \
+occupants_df = spark.read.csv(INPUT_CSV_URL, header=True,inferSchema=True) \
                             .where("timestamp < '2020-01-25'")\
                             .withColumn("housing_unit",lit(0))
 
 if LOG:
+    occupants_df.show()
     print('_'*20,'END: importing original dataset','_'*20)
     print('Original dataset has {} rows and {} columns.'.format(occupants_df.count(), len(occupants_df.columns)))
     print('Original dataset has features:', occupants_df.columns)
@@ -71,6 +85,8 @@ if LOG:
 occupants_filtered_df = occupants_df.withColumns(conversion_dict)
 
 if LOG:
+    print('Median filtered dataset: ')
+    occupants_filtered_df.show()
     print('_'*20, 'END: Median filtering with window size: {}'.format(window_size),'_'*20)
 
 
@@ -78,7 +94,7 @@ if LOG:
 ################################################## PCA TRAINING ###################################################
 if TRAIN_PCA:
 
-    no_occupants_url = 'hdfs://spark-master:8020/user/root/vagrant/data_ref_until_2020-02-13.csv'
+    no_occupants_url = NOISE_CSV_URL
     no_occupants_df = spark.read.csv(no_occupants_url, header=True,inferSchema=True) \
                                     .where("('2020-01-27' <= timestamp) AND (timestamp <='2020-02-04')")
 
@@ -110,18 +126,22 @@ if TRAIN_PCA:
         print('_'*20, 'END: noise PCA TRAINING','_'*20)
 
     # Saving fitted PCA
-    pca.save(NOISE_PCA_URL)
+    if not LOCAL:
+        pca.save(NOISE_PCA_URL)
 
-    if LOG:
-        print('_'*20, 'noise PCAModel has been saved','_'*20)
+        if LOG:
+            print('_'*20, 'noise PCAModel has been saved','_'*20)
 
 ################################################## PCA (NOISE) PROJECTION ###################################################
-if LOG:
-    print('_'*20, 'Loading noise PCAModel from HDFS','_'*20)
 
 assembler = VectorAssembler(inputCols = cols_to_process, outputCol = 'features')
 # importing pretrained PCA assuming similar sensors & sensor setup
-pca = PCAModel.load(NOISE_PCA_URL)
+if (not LOCAL) and (not TRAIN_PCA):
+    if LOG:
+        print('_'*20, 'Loading noise PCAModel from HDFS','_'*20)
+
+    pca = PCAModel.load(NOISE_PCA_URL)
+
 # applying PCA (noise) projection to dataset
 n_components = 9
 assembled_df_occupants = assembler.transform(occupants_filtered_df).orderBy('timestamp')
@@ -137,9 +157,11 @@ if LOG:
 
 pca_occupants = pca.transform(assembled_df_occupants).orderBy('timestamp')
 pca_occupants_unzipped = pca_occupants.withColumn("feature", vector_to_array("pcaFeatures")) \
-                                        .select(['timestamp']+[col("feature")[i] for i in range(n_components)])
+                                        .select(['housing_unit']+['timestamp']+[col("feature")[i] for i in range(n_components)])
 
 if LOG:
+    print('Projected dataset: ')
+    pca_occupants_unzipped.show()
     print('_'*20, 'END: noise PCAModel inference','_'*20)
 #################################################### PCA NOISE REMOVAL ######################################################
 
@@ -152,6 +174,7 @@ pca_occupants_unzipped = pca_occupants_unzipped.withColumn('feature[0]',lit(0))
 
 
 # zipping vectors to a single colum
+print(pca_occupants_unzipped.columns)
 invert_columns_to_convert = pca_occupants_unzipped.columns
 invert_columns_to_convert.remove('timestamp')
 invert_columns_to_convert.remove('housing_unit')
@@ -159,6 +182,7 @@ assembler_invert = VectorAssembler(inputCols = invert_columns_to_convert, output
 
 pca_occupants_zipped = assembler_invert.transform(pca_occupants_unzipped).orderBy('timestamp')
 
+##FIXME SLOW PART
 # reproject it to original space
 K = pca.pc.toArray()
 pca_occupants_features = pca_occupants_zipped.toPandas()
@@ -173,6 +197,8 @@ inv_transf_occupants += np.array(occupants_scaler.mean)
 inv_transf_occupants = spark.createDataFrame(pd.concat([pca_occupants_features,pd.DataFrame(inv_transf_occupants, columns=cols_to_process)], axis=1))
 
 if LOG:
+    print('Noise-removed dataset: ')
+    inv_transf_occupants.show()
     print('_'*20, 'END: noise removal (first PCA projected space component)','_'*20)
 
 '''
