@@ -1,6 +1,6 @@
 #################################################### PARAMS ####################################################
 # parameter to simulate the pyspark pipeline with `n_copies` of the original dataframe, replication
-N_COPIES = 5
+N_COPIES = 1
 LOG = True
 TRAIN_PCA = False
 LOCAL = True
@@ -36,6 +36,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyspark.sql.functions import asc
 from pyspark.sql.window import Window
+from pyspark.sql.types import ArrayType, DoubleType
 from pyspark.sql import functions as F
 from pyspark.ml.feature import VectorAssembler, StandardScaler, PCA, PCAModel
 from pyspark.sql.functions import col, concat, dayofmonth, hour, month, year
@@ -182,20 +183,28 @@ assembler_invert = VectorAssembler(inputCols = invert_columns_to_convert, output
 
 pca_occupants_zipped = assembler_invert.transform(pca_occupants_unzipped).orderBy('timestamp')
 
-##FIXME SLOW PART
 # reproject it to original space
+std = occupants_scaler.std.toArray()
+mean = occupants_scaler.mean.toArray()
 K = pca.pc.toArray()
-pca_occupants_features = pca_occupants_zipped.toPandas()
-X = np.array(pca_occupants_features["pcaFeatures"].tolist())
-pca_occupants_features = pca_occupants_features.drop(columns=["pcaFeatures"])
-inv_transf_occupants = (X @ K.T)
 
-# inverting normalization
-inv_transf_occupants *= occupants_scaler.std 
-inv_transf_occupants += np.array(occupants_scaler.mean)
+def inv_transform(pca_features):
+    X = np.array(pca_features)
+    inv_transf = X @ K.T
+    # inverting normalization
+    inv_transf *= std 
+    inv_transf += mean
+    return inv_transf.tolist()
 
-inv_transf_occupants = spark.createDataFrame(pd.concat([pca_occupants_features,pd.DataFrame(inv_transf_occupants, columns=cols_to_process)], axis=1))
+inv_transform_udf = F.udf(inv_transform, ArrayType(DoubleType()))
 
+# Apply the UDF to get the inverse transformed features
+inv_transf_occupants= pca_occupants_zipped.withColumn("result", inv_transform_udf(col("pcaFeatures")))
+
+inv_transf_occupants = inv_transf_occupants.select("timestamp",
+    *[col('result').getItem(i).alias(cols_to_process[i]) for i in range(len(cols_to_process))],
+    "housing_unit"
+)
 if LOG:
     print('Noise-removed dataset: ')
     inv_transf_occupants.show()
