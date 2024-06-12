@@ -3,6 +3,7 @@
 N_COPIES = 1
 LOG = True
 TRAIN_PCA = False
+COMPUTE_EVENT= False
 LOCAL = True
 
 if LOCAL:
@@ -39,10 +40,13 @@ from pyspark.sql.window import Window
 from pyspark.sql.types import ArrayType, DoubleType
 from pyspark.sql import functions as F
 from pyspark.ml.feature import VectorAssembler, StandardScaler, PCA, PCAModel
-from pyspark.sql.functions import col, concat, dayofmonth, hour, month, year
+from pyspark.sql.functions import col, concat, dayofmonth, hour, month, year, when, sum
 from pyspark.sql.functions import lit
 from pyspark.ml.functions import vector_to_array
 from pyspark.sql.types import FloatType, IntegerType
+
+from sklearn.decomposition import PCA as SklearnPCA
+
 
 ###################################################### IMPORTING DATA #######################################################
 if LOG:
@@ -210,13 +214,104 @@ if LOG:
     inv_transf_occupants.show()
     print('_'*20, 'END: noise removal (first PCA projected space component)','_'*20)
 
-'''
+
 ############################################### WINDOW-PCA + T-SQUARED LIMIT ################################################
 
+def compute_event(features_matrix):
+    event = -1
+    
+    pca_input = np.array([v.toArray() for v in features_matrix])
+    
+    if (pca_input.shape[0] == 361):
+        pca = SklearnPCA(n_components=2)
 
+        pca.fit(pca_input[:-1, :])
+        
+        transformed_features = pca.transform(pca_input[:-1, :])
+        last_element_pca = pca.transform([pca_input[-1, :]])
+        
+        means = np.mean(transformed_features, axis=0)
+        cov_matrix_sample = np.cov(transformed_features.T)   
+        inv_cov_matrix_sample = np.linalg.inv(cov_matrix_sample)
+
+        tmp = last_element_pca - means
+
+        mahalanobis_tsquare_ratio =  (tmp @ inv_cov_matrix_sample @ tmp.T).item()**(-1/2)
+        
+        event = 1 if mahalanobis_tsquare_ratio > 1 else 0 
+    
+    return event
+
+
+if LOG:
+    print('_'*20, 'START: event calculus','_'*20)
+
+if COMPUTE_EVENT:
+
+    columns_to_transform = inv_transf_occupants.columns
+    columns_to_transform.remove("timestamp")
+
+    assembler = VectorAssembler(inputCols=columns_to_transform, outputCol='featuresToWindowPCA')
+    assembled_features = assembler.transform(inv_transf_occupants)
+
+
+    scaler = StandardScaler(inputCol='featuresToWindowPCA', outputCol="scaled_features_centered", withStd=True, withMean=True)
+    scaler = scaler.fit(assembled_features)
+    assembled_features = scaler.transform(assembled_features) \
+                                .drop("featuresToWindowPCA") \
+                                .withColumnRenamed("scaled_features_centered", 'featuresToWindowPCA')
+
+
+    window_size = 360
+    window_spec = Window.partitionBy("housing_unit").rowsBetween(-window_size, 0).orderBy("timestamp")
+
+    compute_event_udf = F.udf(compute_event, IntegerType())
+
+    inv_transf_occupants = assembled_features.withColumn("event", compute_event_udf(F.collect_list("featuresToWindowPCA").over(window_spec)))
+
+    inv_transf_occupants = inv_transf_occupants.drop('featuresToWindowPCA')
+    columns_to_transform = [c for c in inv_transf_occupants.columns if c not in ['timestamp','event']]
+    inv_transf_occupants_pd = inv_transf_occupants.orderBy("timestamp").toPandas()
+    inv_transf_occupants_pd[columns_to_transform] = inv_transf_occupants_pd[columns_to_transform].astype(float)
+    inv_transf_occupants = inv_transf_occupants.withColumn("event", when(inv_transf_occupants["event"] == -1, 0).otherwise(inv_transf_occupants["event"]))
+
+    inv_transf_occupants_pd.to_csv("./data/database_gas_after_environmental_correction_with_event.csv", sep=',', index=False)
+
+else:
+
+    inv_transf_occupants = spark.read.csv("./data/database_gas_after_environmental_correction_with_event.csv", header=True, inferSchema=True)
+
+
+inv_transf_occupants_new = inv_transf_occupants.withColumn("date_hour", F.date_format(inv_transf_occupants["timestamp"], "yyyy-MM-dd HH"))   
+event_per_hour = inv_transf_occupants_new.groupBy("date_hour").agg(sum(when(inv_transf_occupants_new["event"] == 1, 1).otherwise(0)).alias("n_event"))
+
+
+
+
+if LOG:
+    print('_'*20, 'END: event calculus','_'*20)
+'''
 ################################################### EVENT HOURLY BINNING ####################################################
 
 
 ################################################## OUTPUT (SHOW) HEATMAP MATRIX / EVENTS DATAFRAME ####################################################
 
+
 '''
+#event_per_hour.orderBy("date_hour").show()
+
+event_per_hour_2 = event_per_hour.filter((F.col("date_hour") >= '2019-12-01') & (F.col("date_hour") <= '2019-12-31'))
+
+# Add 'date' and 'hour' columns
+event_per_hour_2 = event_per_hour_2.withColumn("date", F.date_format(event_per_hour_2["date_hour"], "yyyy-MM-dd"))
+event_per_hour_2 = event_per_hour_2.withColumn("hour", hour(event_per_hour_2["date_hour"]))
+
+# Perform the pivot operation
+pivot_df = event_per_hour_2.groupBy("date").pivot("hour").agg(F.sum("n_event"))
+
+# Fill any null values with 0
+pivot_df = pivot_df.fillna(0)
+pivot_df = pivot_df.orderBy("date")
+
+# Show the resulting DataFrame
+pivot_df.show()
