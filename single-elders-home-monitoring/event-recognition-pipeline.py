@@ -3,7 +3,6 @@
 N_COPIES = 1
 LOG = True
 TRAIN_PCA = False
-COMPUTE_EVENT= False
 LOCAL = True
 
 if LOCAL:
@@ -17,6 +16,7 @@ if LOCAL:
     TRAIN_PCA = True
     INPUT_CSV_URL = './data/database_gas.csv'
     NOISE_CSV_URL = './data/data_ref_until_2020-02-13.csv'
+    EVENT_CSV_URL = './data/database_gas_after_environmental_correction_with_event.csv'
 else:
     NOISE_PCA_URL = 'hdfs://spark-master:8020/user/root/vagrant/noisePCA'
     INPUT_CSV_URL ='hdfs://spark-master:8020/user/root/vagrant/database_gas.csv'
@@ -49,6 +49,10 @@ from sklearn.decomposition import PCA as SklearnPCA
 
 
 ###################################################### IMPORTING DATA #######################################################
+print('_'*91)
+print('_'*20,'START: HOME MONITORING EVENT RECOGNITION PIPELINE','_'*20)
+print('_'*91)
+
 if LOG:
     print('_'*20,'START: importing original dataset','_'*20)
 
@@ -178,8 +182,7 @@ if LOG:
 pca_occupants_unzipped = pca_occupants_unzipped.withColumn('feature[0]',lit(0))
 
 
-# zipping vectors to a single colum
-print(pca_occupants_unzipped.columns)
+# zipping vectors to a single column
 invert_columns_to_convert = pca_occupants_unzipped.columns
 invert_columns_to_convert.remove('timestamp')
 invert_columns_to_convert.remove('housing_unit')
@@ -246,7 +249,7 @@ def compute_event(features_matrix):
 if LOG:
     print('_'*20, 'START: event calculus','_'*20)
 
-if COMPUTE_EVENT:
+if not LOCAL:
 
     columns_to_transform = inv_transf_occupants.columns
     columns_to_transform.remove("timestamp")
@@ -271,36 +274,24 @@ if COMPUTE_EVENT:
 
     inv_transf_occupants = inv_transf_occupants.drop('featuresToWindowPCA')
     columns_to_transform = [c for c in inv_transf_occupants.columns if c not in ['timestamp','event']]
-    inv_transf_occupants_pd = inv_transf_occupants.orderBy("timestamp").toPandas()
-    inv_transf_occupants_pd[columns_to_transform] = inv_transf_occupants_pd[columns_to_transform].astype(float)
     inv_transf_occupants = inv_transf_occupants.withColumn("event", when(inv_transf_occupants["event"] == -1, 0).otherwise(inv_transf_occupants["event"]))
-
-    inv_transf_occupants_pd.to_csv("./data/database_gas_after_environmental_correction_with_event.csv", sep=',', index=False)
 
 else:
 
-    inv_transf_occupants = spark.read.csv("./data/database_gas_after_environmental_correction_with_event.csv", header=True, inferSchema=True)
+    inv_transf_occupants = spark.read.csv(EVENT_CSV_URL, header=True, inferSchema=True)
 
-
+# summing events over hourly bins
 inv_transf_occupants_new = inv_transf_occupants.withColumn("date_hour", F.date_format(inv_transf_occupants["timestamp"], "yyyy-MM-dd HH"))   
 event_per_hour = inv_transf_occupants_new.groupBy("date_hour").agg(sum(when(inv_transf_occupants_new["event"] == 1, 1).otherwise(0)).alias("n_event"))
 
-
-
-
 if LOG:
     print('_'*20, 'END: event calculus','_'*20)
-'''
-################################################### EVENT HOURLY BINNING ####################################################
-
 
 ################################################## OUTPUT (SHOW) HEATMAP MATRIX / EVENTS DATAFRAME ####################################################
+OUTPUT_FILTER_PERIOD = (F.col("date_hour") >= '2019-12-01') & (F.col("date_hour") <= '2019-12-31')
 
-
-'''
-#event_per_hour.orderBy("date_hour").show()
-
-event_per_hour_2 = event_per_hour.filter((F.col("date_hour") >= '2019-12-01') & (F.col("date_hour") <= '2019-12-31'))
+# using output filter period
+event_per_hour_2 = event_per_hour.filter(OUTPUT_FILTER_PERIOD)
 
 # Add 'date' and 'hour' columns
 event_per_hour_2 = event_per_hour_2.withColumn("date", F.date_format(event_per_hour_2["date_hour"], "yyyy-MM-dd"))
@@ -310,8 +301,14 @@ event_per_hour_2 = event_per_hour_2.withColumn("hour", hour(event_per_hour_2["da
 pivot_df = event_per_hour_2.groupBy("date").pivot("hour").agg(F.sum("n_event"))
 
 # Fill any null values with 0
-pivot_df = pivot_df.fillna(0)
-pivot_df = pivot_df.orderBy("date")
+pivot_df = pivot_df.fillna(0).orderBy("date")
+
+if LOG:
+    print('_'*20, 'END: event calculus','_'*20)
 
 # Show the resulting DataFrame
 pivot_df.show()
+
+print('_'*89)
+print('_'*20,'END: HOME MONITORING EVENT RECOGNITION PIPELINE','_'*20)
+print('_'*89)
