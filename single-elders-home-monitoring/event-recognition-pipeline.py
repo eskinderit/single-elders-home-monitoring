@@ -1,7 +1,7 @@
 #################################################### PARAMS ####################################################
 # parameter to simulate the pyspark pipeline with `n_copies` of the original dataframe, replication
-N_COPIES = 1
-LOG = True
+N_COPIES = 5
+LOG = False
 TRAIN_PCA = False
 LOCAL = True
 
