@@ -8,8 +8,8 @@ This repository contains the **PySpark [UNOFFICIAL] implementation** of the stud
 ## Run configuration
 1. **Jupyter Notebook** : this implementation is designed to run locally, just to show how the pipeline described by the paper was reproduced.
 The python script is meant to run (also) on a VM cluster in PySpark cluster mode, enabling efficient data processing and analysis at scale.
-2. **Python Script**: the project includes a Python script and a configuration that uses Vagrant and VirtualBox to set-up a VMs cluster in **Spark Cluster Mode** as production environment.
-The details and the instructions on how to use the configuration are in the `instructions.md` file of this repository.
+2. **Python Script**: the project includes a Python script of the papers pipeline re-implementation, `event-recognition-pipeline.py` ,and a PySpark cluster setting that uses Vagrant and VirtualBox to set-up a VMs cluster in **Spark Cluster Mode** as production environment.
+The details and the instructions on how to use the cluster configuration are in the `instructions.md` file of this repository.
 
 ## Overview
 The project aims to identify and analyze significant events and activity patterns in a home environment using data from gas sensors. The primary objectives include:
@@ -17,9 +17,3 @@ The project aims to identify and analyze significant events and activity pattern
 - Detecting statistically significant events corresponding to human activities.
 - Building a map of daily activities and identifying deviations from regular patterns.
 - Benchmarking gas sensor data against motion sensor data to validate the system's accuracy.
-## Features
-- Environmental Correction and PCA Representation: Adjusts for environmental factors and visualizes data in PCA space.
-- Event Detection: Identifies significant events using Mahalanobis distance and T-squared statistics.
-- Activity Mapping: Creates daily activity maps and highlights deviations on special occasions like holidays.
-- Pattern Analysis: Analyzes regular activity patterns and detects anomalies.
-- Benchmarking: Compares gas sensor data with motion sensor data to establish ground-truth references.
