@@ -181,7 +181,7 @@ sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/model
 ```
 9. submit our project pipeline 
 ```
-sudo spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
+spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
 ```
 
 ### To change configuration
