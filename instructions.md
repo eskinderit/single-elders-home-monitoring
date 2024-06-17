@@ -71,6 +71,49 @@ spark-submit --master spark://spark-master:7077 ./examples/src/main/python/pi.py
 
 ## Now we want to correctly set up the HDFS namenode and datanodes
 
+### Slaves (Datanodes) setup
+This procedure has to be followed on the spark-slave-2 and spark-slave-3 VMs:
+
+1. Copy as the content of the file `hdfs-site.xml` located in `/usr/local/hadoop-3.4.0/etc/hadoop`:
+```
+<configuration>
+  <property>
+    <name>dfs.replication</name>
+    <value>2</value>
+  </property>
+  <property>
+    <name>dfs.namenode.rpc-address</name>
+    <value>spark-master:8020</value>
+  </property>
+  <property>
+    <name>dfs.datanode.data.dir</name>
+    <value>file:/hdfs/datanode</value>
+  </property>
+</configuration>
+```
+2. Copy as the content of the file `core-site.xml` located in `/usr/local/hadoop-3.4.0/etc/hadoop`:
+```
+<configuration>
+  <property>
+    <name>fs.defaultFS</name>
+    <value>hdfs://spark-master:8020</value>
+  </property>
+</configuration>
+```
+3. create namenode and datanode hdfs directories
+```
+sudo mkdir -p /hdfs/datanode
+sudo chmod -R 777 /hdfs/datanode
+```
+4. format namenode
+```
+sudo $HADOOP_HOME/bin/hadoop datanode -format
+```
+5. start namenode and datanode daemons, check status
+```
+sudo $HADOOP_HOME/bin/hdfs --daemon start datanode
+sudo $HADOOP_HOME/bin/hdfs --daemon status datanode
+```
 ### Master (Namenode + Datanode) setup
 This procedure has to be followed on the spark-master VM:
 
@@ -107,20 +150,21 @@ This procedure has to be followed on the spark-master VM:
 3. create namenode and datanode hdfs directories
 ```
 sudo mkdir -p /hdfs/datanode
-sudo mkdir -p /hdfs/namenode
-
 sudo chmod -R 777 /hdfs/datanode
+
+sudo mkdir -p /hdfs/namenode
 sudo chmod -R 777 /hdfs/namenode
 ```
 4. format namenode
 ```
 sudo $HADOOP_HOME/bin/hadoop namenode -format
+sudo $HADOOP_HOME/bin/hadoop datanode -format
 ```
 5. start namenode and datanode daemons, check status
 ```
 sudo $HADOOP_HOME/bin/hdfs --daemon start datanode
-sudo $HADOOP_HOME/bin/hdfs --daemon start namenode
 sudo $HADOOP_HOME/bin/hdfs --daemon status datanode
+sudo $HADOOP_HOME/bin/hdfs --daemon start namenode
 sudo $HADOOP_HOME/bin/hdfs --daemon status namenode
 ```
 6. create new folders in hdfs after format
