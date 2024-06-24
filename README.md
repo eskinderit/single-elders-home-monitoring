@@ -13,6 +13,8 @@ The python script is meant to run (also) on a VM cluster in PySpark cluster mode
 /event-recognition-pipeline.py` ,and a PySpark cluster setting that uses Vagrant and VirtualBox to set-up a VMs cluster in **Spark Cluster Mode** as production environment.
 The details and the instructions on how to use the cluster configuration are in the `instructions.md` file of this repository.
 
+![PySpark Cluster Configuration of this project](./presentation/spark-cluster-config-elders.png)
+
 ## Overview
 The project aims to identify and analyze significant events and activity patterns in a home environment using data from gas sensors. The primary objectives include:
 - Correcting environmental factors and representing the data in PCA space.
