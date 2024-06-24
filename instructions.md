@@ -183,7 +183,7 @@ sudo $HADOOP_HOME/bin/hdfs --daemon status namenode
   </property>
 </configuration>
 ```
-2. run clustermanager and nodemanager daemons, check status
+2. run resourcemanager and nodemanager daemons, check status
 ```
 $HADOOP_HOME/bin/yarn --daemon start resourcemanager
 $HADOOP_HOME/bin/yarn --daemon status resourcemanager
@@ -192,7 +192,7 @@ $HADOOP_HOME/bin/yarn --daemon start nodemanager
 $HADOOP_HOME/bin/yarn --daemon status nodemanager
 ```
 ### Slaves (Nodemanager) setup
-1. Modify the `yarn-site.xml` file located in `` to this:
+1. Modify the `yarn-site.xml` file located in `/usr/local/hadoop-3.4.0/etc/hadoop` to this:
 ```
 <configuration>
   <property>
@@ -242,4 +242,6 @@ spark-submit --master yarn /vagrant/single-elders-home-monitoring/event-recognit
 - to check that pyspark is correctly installed: launch `pyspark` and/or `spark-shell`
 - to check what hdfs datanodes/namenodes are running: `$HADOOP_HOME/bin/hdfs dfsadmin -report`
 - to close ssh user session launch `exit` 
-- to switch off VM launch `vagrant halt` 
+- to switch off VM launch `vagrant halt`
+- to check running namenodes/datanodes: `$HADOOP_HOME/bin/yarn node -list`
+- to check running datamanager: `$HADOOP_HOME/bin/hdfs dfsadmin -report`
