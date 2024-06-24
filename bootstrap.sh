@@ -69,6 +69,11 @@ if ! grep "export SPARK_HOME=/usr/local/spark-3.5.0-bin-hadoop3" /home/vagrant/.
   echo "export SPARK_HOME=/usr/local/spark-3.5.0-bin-hadoop3" >>  /home/vagrant/.bashrc
   echo "export PATH=$PATH:/usr/local/spark-3.5.0-bin-hadoop3/bin:/usr/local/spark-3.5.0-bin-hadoop3/sbin" >>  /home/vagrant/.bashrc
 fi
+if ! grep "export HADOOP_CONF_DIR=/usr/local/hadoop-3.4.0/etc/hadoop" /home/vagrant/.bashrc; then
+  echo "export HADOOP_CONF_DIR=/usr/local/hadoop-3.4.0/etc/hadoop" >>  /home/vagrant/.bashrc
+fi
+
+
 
 
 # setting up hostnames
