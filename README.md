@@ -6,9 +6,11 @@ This repository contains the **PySpark [UNOFFICIAL] implementation** of the stud
 - [Link to the dataset](https://archive.ics.uci.edu/dataset/799/single+elder+home+monitoring+gas+and+position)
 
 ## Run configuration
-1. **Jupyter Notebook** : this implementation is designed to run locally, just to show how the pipeline described by the paper was reproduced.
+1. **Jupyter Notebook** : `single-elders-home-monitoring
+/single-elders-monitoring-PCAfiltering.ipynb`this implementation is designed to run locally, just to show how the pipeline described by the paper was reproduced.
 The python script is meant to run (also) on a VM cluster in PySpark cluster mode, enabling efficient data processing and analysis at scale.
-2. **Python Script**: the project includes a Python script of the papers pipeline re-implementation, `event-recognition-pipeline.py` ,and a PySpark cluster setting that uses Vagrant and VirtualBox to set-up a VMs cluster in **Spark Cluster Mode** as production environment.
+2. **Python Script**: the project includes a Python script of the papers pipeline re-implementation, `single-elders-home-monitoring
+/event-recognition-pipeline.py` ,and a PySpark cluster setting that uses Vagrant and VirtualBox to set-up a VMs cluster in **Spark Cluster Mode** as production environment.
 The details and the instructions on how to use the cluster configuration are in the `instructions.md` file of this repository.
 
 ## Overview
