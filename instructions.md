@@ -168,22 +168,70 @@ sudo $HADOOP_HOME/bin/hdfs --daemon status datanode
 sudo $HADOOP_HOME/bin/hdfs --daemon start namenode
 sudo $HADOOP_HOME/bin/hdfs --daemon status namenode
 ```
+# Set up YARN
+### Master (Resourcemanager + Nodemanager) setup
+1. Modify the `yarn-site.xml` file located in `` to this:
+```
+<configuration>
+  <property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value>spark-master</value>
+  </property>
+  <property>
+    <name>yarn.log-aggregation-enable</name>
+    <value>true</value>
+  </property>
+</configuration>
+```
+2. run clustermanager and nodemanager daemons, check status
+```
+$HADOOP_HOME/bin/yarn --daemon start resourcemanager
+$HADOOP_HOME/bin/yarn --daemon status resourcemanager
+
+$HADOOP_HOME/bin/yarn --daemon start nodemanager
+$HADOOP_HOME/bin/yarn --daemon status nodemanager
+```
+### Slaves (Nodemanager) setup
+1. Modify the `yarn-site.xml` file located in `` to this:
+```
+<configuration>
+  <property>
+    <name>yarn.resourcemanager.hostname</name>
+    <value>spark-master</value>
+  </property>
+  <property>
+    <name>yarn.log-aggregation-enable</name>
+    <value>true</value>
+  </property>
+</configuration>
+```
+2. run nodemanager daemons, check status
+```
+$HADOOP_HOME/bin/yarn --daemon start nodemanager
+$HADOOP_HOME/bin/yarn --daemon status nodemanager
+```
 
 # Execute our pipeline
+1. create a user folder on distributed file system
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -mkdir -p /user/root/vagrant
 ```
-1. move input csv to namenode hdfs
+2. grant access to the distributed filesystem to vagrant user:
+```
+sudo $HADOOP_HOME/bin/hdfs dfs -chown -R vagrant /
+sudo $HADOOP_HOME/bin/hdfs dfs -chmod -R 700 /
+```
+3. move input csv to namenode hdfs
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/data/database_gas.csv /user/root/vagrant/database_gas.csv
 ```
-2. move noise PCAModel to namenode hdfs
+4. move noise PCAModel to namenode hdfs
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/models/noisePCA /user/root/vagrant/noisePCA
 ```
-3. submit our project pipeline 
+5. submit our project pipeline 
 ```
-spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
+spark-submit --master yarn /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
 ```
 
 ### To change configuration
