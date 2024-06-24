@@ -3,7 +3,8 @@ The steps that follow describe how to create and setup a Spark cluster using Vag
 This is partially inspired by the guide [Spark Cluster with Virtual Box, Anaconda and Jupyter — The guide](https://blog.devgenius.io/spark-cluster-with-virtual-box-anaconda-and-jupyter-the-guide-dd0007cd5895)
 
 ### Prerequisites
-virtualbox (tested with 7.0.16 r162802) and vagrant (tested with 2.4.1)
+1. virtualbox (tested with 7.0.16 r162802) and vagrant (tested with 2.4.1)
+2. our vms with bootloaders [Download latest release here](https://github.com/eskinderit/single-elders-home-monitoring/releases)
 
 ### Base setup
 In the following procedure we setup 3 nodes: 1(master,slave), 2(slave), 3(slave)
