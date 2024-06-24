@@ -6,7 +6,7 @@ This is partially inspired by the guide [Spark Cluster with Virtual Box, Anacond
 1. virtualbox (tested with 7.0.16 r162802) and vagrant (tested with 2.4.1)
 2. our vms with bootloaders [Download latest release here](https://github.com/eskinderit/single-elders-home-monitoring/releases)
 
-### Base setup
+# Base setup
 In the following procedure we setup 3 nodes: 1(master,slave), 2(slave), 3(slave)
 #### **For each node**
 both *master* and *slaves*, follow the stesps below:
@@ -70,7 +70,7 @@ cd $SPARK_HOME
 spark-submit --master spark://spark-master:7077 ./examples/src/main/python/pi.py 10
 ```
 
-## Now we want to correctly set up the HDFS namenode and datanodes
+# Set up HDFS
 
 ### Slaves (Datanodes) setup
 This procedure has to be followed on the spark-slave-2 and spark-slave-3 VMs:
@@ -168,19 +168,20 @@ sudo $HADOOP_HOME/bin/hdfs --daemon status datanode
 sudo $HADOOP_HOME/bin/hdfs --daemon start namenode
 sudo $HADOOP_HOME/bin/hdfs --daemon status namenode
 ```
-6. create new folders in hdfs after format
+
+# Execute our pipeline
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -mkdir -p /user/root/vagrant
 ```
-7. move input csv to namenode hdfs
+1. move input csv to namenode hdfs
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/data/database_gas.csv /user/root/vagrant/database_gas.csv
 ```
-8. move noise PCAModel to namenode hdfs
+2. move noise PCAModel to namenode hdfs
 ```
 sudo $HADOOP_HOME/bin/hdfs dfs -put /vagrant/single-elders-home-monitoring/models/noisePCA /user/root/vagrant/noisePCA
 ```
-9. submit our project pipeline 
+3. submit our project pipeline 
 ```
 spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-monitoring/event-recognition-pipeline.py 10
 ```
@@ -191,5 +192,6 @@ spark-submit --master spark://spark-master:7077 /vagrant/single-elders-home-moni
 
 ### Running PySpark on Jupyter Notebook
 - to check that pyspark is correctly installed: launch `pyspark` and/or `spark-shell`
+- to check what hdfs datanodes/namenodes are running: `$HADOOP_HOME/bin/hdfs dfsadmin -report`
 - to close ssh user session launch `exit` 
 - to switch off VM launch `vagrant halt` 
