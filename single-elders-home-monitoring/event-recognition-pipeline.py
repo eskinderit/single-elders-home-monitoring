@@ -1,9 +1,9 @@
 #################################################### PARAMS ####################################################
 # parameter to simulate the pyspark pipeline with `n_copies` of the original dataframe, replication
-N_COPIES = 5
-LOG = False
+N_COPIES = 2
+LOG = True
 TRAIN_PCA = False
-LOCAL = True
+LOCAL = False
 
 if LOCAL:
     import os
@@ -302,9 +302,6 @@ pivot_df = event_per_hour_2.groupBy("date").pivot("hour").agg(F.sum("n_event"))
 
 # Fill any null values with 0
 pivot_df = pivot_df.fillna(0).orderBy("date")
-
-if LOG:
-    print('_'*20, 'END: event calculus','_'*20)
 
 # Show the resulting DataFrame
 pivot_df.show()
